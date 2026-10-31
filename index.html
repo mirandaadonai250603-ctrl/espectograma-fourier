@@ -1,0 +1,989 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lo veo y no lo creo!!! análisis de Fourier y espectros !!!</title>
+    <style>
+        :root {
+            --bg-body: #3b3b3b;
+            --bg-panel: #c6c6c6;
+            --text-main: #ffffff;
+            --text-dark: #222222;
+            --btn-face: #606060;
+            --btn-face-hover: #757575;
+            --btn-border-light: #e0e0e0;
+            --btn-border-dark: #222222;
+            --accent-splash: #ffff00;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Courier New', Courier, monospace; 
+            background-color: var(--bg-body);
+            color: var(--text-main);
+            margin: 0;
+            padding: 20px 10px;
+            display: flex;
+            justify-content: center;
+            background-image: 
+                linear-gradient(rgba(0,0,0,0.3) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(0,0,0,0.3) 1px, transparent 1px);
+            background-size: 32px 32px;
+        }
+
+        .app-container {
+            max-width: 1250px;
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .app-header {
+            position: relative;
+            text-align: center;
+            padding-bottom: 15px;
+            margin-bottom: 5px;
+        }
+
+        .app-header h1 {
+            margin: 0;
+            font-size: clamp(1.4rem, 4vw, 2.2rem);
+            font-weight: 900;
+            color: #e0e0e0;
+            text-shadow: 3px 3px 0px #222;
+            font-family: 'Impact', 'Arial Black', sans-serif;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+        }
+
+        .app-header h2 {
+            margin: 5px 0 0 0;
+            font-size: clamp(0.9rem, 2vw, 1.1rem);
+            color: #bbbbbb;
+            font-family: 'Courier New', monospace;
+            font-weight: normal;
+            letter-spacing: 1px;
+        }
+
+        .splash-text {
+            position: absolute;
+            right: 10%;
+            bottom: -10px;
+            color: var(--accent-splash);
+            font-size: clamp(1rem, 2.5vw, 1.4rem);
+            font-weight: bold;
+            transform: rotate(-12deg);
+            text-shadow: 2px 2px 0px #000;
+            animation: minecraftPulse 0.5s infinite alternate ease-in-out;
+            font-family: 'Courier New', monospace;
+            z-index: 10;
+        }
+
+        @keyframes minecraftPulse {
+            0% { transform: rotate(-12deg) scale(0.98); }
+            100% { transform: rotate(-12deg) scale(1.15); }
+        }
+
+        .module-card {
+            background-color: var(--bg-panel);
+            border: 4px solid var(--btn-border-light);
+            border-right-color: var(--btn-border-dark);
+            border-bottom-color: var(--btn-border-dark);
+            box-shadow: inset -2px -2px 0px #444, inset 2px 2px 0px #fff;
+            padding: 12px;
+        }
+
+        .module-header {
+            position: relative;
+            background-color: #444;
+            color: white;
+            padding: 8px 15px;
+            border: 2px solid #111;
+            box-shadow: inset 2px 2px 0px #666;
+            font-weight: bold;
+            font-size: 1.05rem;
+            margin-bottom: 15px;
+            text-align: center;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .module-splash {
+            position: absolute;
+            right: 15px;
+            top: 50%;
+            transform: translateY(-50%) rotate(4deg);
+            color: var(--accent-splash);
+            font-size: 0.85rem;
+            font-weight: bold;
+            text-shadow: 2px 2px 0px #000;
+            animation: minecraftPulse 0.5s infinite alternate ease-in-out;
+            font-family: 'Courier New', monospace;
+            text-transform: none;
+        }
+
+        .module-content {
+            padding: 5px;
+        }
+
+        .controls-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+            align-items: flex-end;
+            margin-bottom: 15px;
+            justify-content: center;
+        }
+
+        .control-group {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+            color: var(--text-dark);
+            font-weight: bold;
+        }
+
+        .control-group label {
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            text-shadow: 1px 1px 0px #fff;
+        }
+
+        select {
+            padding: 8px 12px;
+            border: 2px solid #111;
+            background-color: #000;
+            font-family: 'Courier New', monospace;
+            font-size: 0.95rem;
+            font-weight: bold;
+            outline: none;
+            cursor: pointer;
+            min-width: 240px;
+            max-width: 100%;
+            box-shadow: inset 2px 2px 0px #444;
+        }
+
+        select#waveType {
+            color: #00ffff;
+            border-color: #008888;
+            box-shadow: inset 2px 2px 0px #004444, 0 0 8px rgba(0, 255, 255, 0.4);
+        }
+
+        select#numTerms {
+            color: #E629DF;
+            border-color: #E629DF;
+            box-shadow: inset 2px 2px 0px #581c87, 0 0 10px rgba(230, 41, 223, 0.6);
+            text-shadow: 0 0 5px #E629DF;
+        }
+
+        .btn {
+            padding: 9px 16px;
+            border: 2px solid var(--btn-border-dark);
+            border-top-color: var(--btn-border-light);
+            border-left-color: var(--btn-border-light);
+            font-family: 'Courier New', monospace;
+            font-size: 0.9rem;
+            font-weight: bold;
+            cursor: pointer;
+            text-shadow: 1px 1px 0px #000;
+            box-shadow: inset 1px 1px 0px rgba(255,255,255,0.3), inset -1px -1px 0px rgba(0,0,0,0.5);
+            transition: all 0.08s;
+            text-transform: uppercase;
+            color: white;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            margin-top: 5px;
+            user-select: none;
+        }
+
+        .btn:hover {
+            filter: brightness(1.15);
+            color: #ffff00;
+        }
+
+        .btn:active {
+            border: 2px solid var(--btn-border-light);
+            border-top-color: var(--btn-border-dark);
+            border-left-color: var(--btn-border-dark);
+            box-shadow: inset 2px 2px 0px rgba(0,0,0,0.6);
+            transform: translateY(1px);
+        }
+
+        .btn-primary { background-color: #2e602e; }
+        .btn-danger { background-color: #7a3232; }
+        .btn-pause { background-color: #7a652a; }
+        .btn-start { background-color: #2a5278; }
+
+        .btn-group {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        .screen-container {
+            background-color: #000;
+            border: 3px solid #222;
+            border-right-color: #555;
+            border-bottom-color: #555;
+            padding: 4px;
+            position: relative;
+            box-shadow: inset 2px 2px 8px rgba(0,0,0,0.9);
+            margin-bottom: 15px;
+            width: 100%;
+            overflow: hidden;
+        }
+
+        #spectroScreenContainer:fullscreen {
+            width: 100vw;
+            height: 100vh;
+            background: #000;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        #spectroScreenContainer:fullscreen canvas {
+            width: 100% !important;
+            height: calc(100vh - 60px) !important;
+        }
+
+        .screen-container.draggable {
+            cursor: grab;
+        }
+
+        .screen-container.draggable:active {
+            cursor: grabbing;
+        }
+
+        canvas {
+            display: block;
+            width: 100%;
+            height: auto;
+            background-color: #000;
+        }
+
+        .screen-label {
+            position: absolute;
+            top: 8px;
+            left: 10px;
+            color: #00ff00;
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 13px;
+            font-weight: bold;
+            pointer-events: none;
+            text-shadow: 1px 1px 2px #000;
+            background: rgba(0,0,0,0.6);
+            padding: 2px 6px;
+            border-radius: 3px;
+            border: 1px solid rgba(0,255,0,0.3);
+            z-index: 5;
+        }
+
+        .formula-info {
+            background: #111;
+            color: #00ff00;
+            border: 2px solid #444;
+            padding: 8px 12px;
+            font-size: 0.85rem;
+            margin-bottom: 12px;
+            text-align: center;
+            box-shadow: inset 1px 1px 3px #000;
+        }
+
+        .youtube-tip {
+            background: #1e1e1e;
+            color: #00ffff;
+            border: 2px dashed #00ffff;
+            padding: 10px 15px;
+            margin-bottom: 15px;
+            text-align: center;
+            font-size: 0.9rem;
+            font-weight: bold;
+            box-shadow: inset 0 0 8px rgba(0, 255, 255, 0.2);
+        }
+
+        .youtube-tip a {
+            color: #ffff00;
+            text-decoration: underline;
+        }
+
+        .youtube-tip a:hover {
+            color: #ff00ff;
+        }
+    </style>
+</head>
+<body>
+
+<div class="app-container">
+    
+    <header class="app-header">
+        <h1>Lo veo y no lo creo!!! análisis de Fourier y espectros !!!</h1>
+        <h2>Análisis Espectral y la Transformada de Fourier espectral.</h2>
+        <div class="splash-text">Scientific!</div>
+    </header>
+
+    <!-- MÓDULO 1: SINTETIZADOR Y GENERADOR DE FOURIER -->
+    <div class="module-card">
+        <div class="module-header">Generador de Funciones (Series de Fourier)</div>
+        <div class="module-content">
+            <div class="controls-row">
+                <div class="control-group">
+                    <label for="waveType">Serie de Fourier:</label>
+                    <select id="waveType">
+                        <option value="square-even-func" selected>Cuadrada Par (Cos)</option>
+                        <option value="square-odd-func">Cuadrada Impar (Sen)</option>
+                        <option value="triangle-even-func">Triangular Par (Cos)</option>
+                        <option value="triangle-odd-func">Triangular Impar (Sen)</option>
+                        <option value="sawtooth">Diente de Sierra (Todos)</option>
+                    </select>
+                </div>
+                <div class="control-group">
+                    <label for="numTerms">ARMÓNICOS (N):</label>
+                    <select id="numTerms">
+                        <option value="1">1</option>
+                        <option value="3">3</option>
+                        <option value="5">5</option>
+                        <option value="10">10</option>
+                        <option value="15">15</option>
+                        <option value="20" selected>20</option>
+                        <option value="30">30</option>
+                        <option value="50">50</option>
+                        <option value="75">75</option>
+                        <option value="100">100</option>
+                    </select>
+                </div>
+                <div class="btn-group">
+                    <button id="playBtn" class="btn btn-primary">▶ Emitir Audio (250 Hz)</button>
+                    <button id="stopBtn" class="btn btn-danger">■ Detener Audio</button>
+                    <button id="pauseWaveBtn" class="btn btn-pause">⏸ Pausar Onda</button>
+                </div>
+            </div>
+
+            <div id="formulaDisplay" class="formula-info">
+                Ecuación: f(t) = (4/π) * [ cos(ωt) - (1/3)cos(3ωt) + (1/5)cos(5ωt) - ... ]
+            </div>
+
+            <div class="screen-container">
+                <canvas id="fourierCanvas" width="1150" height="220"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <!-- MÓDULO 2: ANALIZADOR DE ESPECTRO Y MICROFONO -->
+    <div class="module-card">
+        <div class="module-header">
+            Analizador de Espectro y Espectrograma (FFT)
+            <span class="module-splash">Also try Minecraft Java!</span>
+        </div>
+        <div class="module-content">
+            <div class="controls-row">
+                <div class="btn-group">
+                    <button id="startMicBtn" class="btn btn-start">▶ Conectar Micrófono / Audio</button>
+                    <button id="stopMicBtn" class="btn btn-danger">■ Pausar / Desconectar Analizador</button>
+                </div>
+            </div>
+
+            <!-- Aviso colocado abajo de los botones del micrófono -->
+            <div class="youtube-tip">
+                💡 ¡Usa tu celular! Reproduce el sonido <a href="https://www.youtube.com/watch?v=37LFjNitlSU" target="_blank">cave_14.ogg en YouTube</a>, ponlo cerca del micrófono y verás la magia en el espectrograma.
+            </div>
+            
+            <div class="screen-container">
+                <span class="screen-label">Osciloscopio Entrada (Dominio del Tiempo)</span>
+                <canvas id="timeCanvas" width="1150" height="150"></canvas>
+            </div>
+
+            <div class="screen-container">
+                <span class="screen-label">Analizador FFT (Espectro de Frecuencia)</span>
+                <canvas id="fftCanvas" width="1150" height="230"></canvas>
+            </div>
+
+            <div class="screen-container" id="spectroScreenContainer">
+                <span class="screen-label">Espectrograma (Frecuencia vs Tiempo)</span>
+                <button id="fullscreenSpectroBtn" class="btn btn-pause" style="position: absolute; top: 5px; right: 8px; z-index: 10; padding: 3px 8px; font-size: 0.75rem;">⛶ Pantalla Completa</button>
+                <canvas id="spectrogramCanvas" width="1150" height="280"></canvas>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+<script>
+    function drawGrid(ctx, width, height, isFFT = false) {
+        ctx.fillStyle = '#000000'; 
+        ctx.fillRect(0, 0, width, height);
+
+        ctx.strokeStyle = 'rgba(0, 255, 0, 0.15)';
+        ctx.lineWidth = 1;
+
+        const hSteps = 6;
+        for (let i = 0; i <= hSteps; i++) {
+            let y = Math.floor((height / hSteps) * i);
+            ctx.beginPath(); 
+            ctx.moveTo(0, y + 0.5); 
+            ctx.lineTo(width, y + 0.5); 
+            ctx.stroke();
+        }
+
+        const vSteps = 12;
+        for (let i = 0; i <= vSteps; i++) {
+            let x = Math.floor((width / vSteps) * i);
+            ctx.beginPath(); 
+            ctx.moveTo(x + 0.5, 0); 
+            ctx.lineTo(x + 0.5, height); 
+            ctx.stroke();
+        }
+
+        ctx.strokeStyle = 'rgba(0, 255, 0, 0.4)';
+        ctx.beginPath();
+        if (!isFFT) {
+            ctx.moveTo(0, Math.floor(height / 2) + 0.5);
+            ctx.lineTo(width, Math.floor(height / 2) + 0.5);
+        } else {
+            ctx.moveTo(0, height - 1.5);
+            ctx.lineTo(width, height - 1.5);
+        }
+        ctx.stroke();
+    }
+
+    const fourierCanvas = document.getElementById('fourierCanvas');
+    const fCtx = fourierCanvas.getContext('2d');
+    const waveTypeSelect = document.getElementById('waveType');
+    const numTermsSelect = document.getElementById('numTerms');
+    const formulaDisplay = document.getElementById('formulaDisplay');
+    
+    let timeOffset = 0;
+    let audioCtx = null;
+    let oscillator = null;
+    let animFourier = null;
+    let wavePaused = false;
+
+    function updateFormulaText(type) {
+        switch(type) {
+            case 'square-even-func':
+                formulaDisplay.textContent = 'Cuadrada Par (Cos): f(t) = (4/π) * [ cos(ωt) - (1/3)cos(3ωt) + (1/5)cos(5ωt) - ... ]';
+                break;
+            case 'square-odd-func':
+                formulaDisplay.textContent = 'Cuadrada Impar (Sen): f(t) = (4/π) * [ sen(ωt) + (1/3)sen(3ωt) + (1/5)sen(5ωt) + ... ]';
+                break;
+            case 'triangle-even-func':
+                formulaDisplay.textContent = 'Triangular Par (Cos): f(t) = (8/π²) * [ cos(ωt) + (1/3²)cos(3ωt) + (1/5²)cos(5ωt) + ... ]';
+                break;
+            case 'triangle-odd-func':
+                formulaDisplay.textContent = 'Triangular Impar (Sen): f(t) = (8/π²) * [ sen(ωt) - (1/3²)sen(3ωt) + (1/5²)sen(5ωt) - ... ]';
+                break;
+            case 'sawtooth':
+                formulaDisplay.textContent = 'Diente de Sierra (Todos): f(t) = (2/π) * [ sen(ωt) - (1/2)sen(2ωt) + (1/3)sen(3ωt) - ... ]';
+                break;
+        }
+    }
+
+    function calculateFourierPoint(type, terms, t) {
+        let y = 0;
+        
+        for (let k = 1; k <= terms; k++) {
+            let n, coeff, term;
+            
+            if (type === 'square-even-func') {
+                n = 2 * k - 1;
+                coeff = 4 / (Math.PI * n);
+                let sign = Math.pow(-1, k - 1);
+                term = sign * coeff * Math.cos(n * t);
+            } 
+            else if (type === 'square-odd-func') {
+                n = 2 * k - 1;
+                coeff = 4 / (Math.PI * n);
+                term = coeff * Math.sin(n * t);
+            } 
+            else if (type === 'triangle-even-func') {
+                n = 2 * k - 1;
+                coeff = 8 / (Math.PI * Math.PI * n * n);
+                term = coeff * Math.cos(n * t);
+            } 
+            else if (type === 'triangle-odd-func') {
+                n = 2 * k - 1;
+                coeff = 8 / (Math.PI * Math.PI * n * n);
+                let sign = Math.pow(-1, (n - 1) / 2);
+                term = sign * coeff * Math.sin(n * t);
+            } 
+            else if (type === 'sawtooth') {
+                n = k;
+                coeff = (2 * Math.pow(-1, n + 1)) / (Math.PI * n);
+                term = coeff * Math.sin(n * t);
+            }
+            
+            y += term;
+        }
+        return y;
+    }
+
+    function renderFourier() {
+        const width = fourierCanvas.width;
+        const height = fourierCanvas.height;
+        const type = waveTypeSelect.value;
+        const terms = parseInt(numTermsSelect.value);
+        const centerY = height / 2;
+        const amplitude = height * 0.38;
+
+        drawGrid(fCtx, width, height);
+
+        fCtx.beginPath();
+        fCtx.strokeStyle = '#E629DF';
+        fCtx.lineWidth = 2.5;
+        fCtx.lineJoin = 'round';
+
+        const totalRadians = 6 * Math.PI;
+
+        for (let x = 0; x < width; x++) {
+            let t = (x / width) * totalRadians - timeOffset;
+            let y = calculateFourierPoint(type, terms, t);
+
+            let canvasY = centerY - (y * amplitude);
+            if (x === 0) fCtx.moveTo(x, canvasY);
+            else fCtx.lineTo(x, canvasY);
+        }
+        fCtx.stroke();
+
+        if (!wavePaused) {
+            timeOffset += 0.04;
+        }
+        animFourier = requestAnimationFrame(renderFourier);
+    }
+
+    waveTypeSelect.addEventListener('change', () => {
+        updateFormulaText(waveTypeSelect.value);
+        if (oscillator) playAudioFourier();
+    });
+
+    numTermsSelect.addEventListener('change', () => {
+        if (oscillator) playAudioFourier();
+    });
+
+    updateFormulaText(waveTypeSelect.value);
+    renderFourier();
+
+    document.getElementById('pauseWaveBtn').addEventListener('click', () => {
+        wavePaused = !wavePaused;
+        const btn = document.getElementById('pauseWaveBtn');
+        btn.textContent = wavePaused ? '▶ Reanudar Onda' : '⏸ Pausar Onda';
+    });
+
+    function playAudioFourier() {
+        if (oscillator) {
+            try { oscillator.stop(); } catch(e){}
+            oscillator = null;
+        }
+
+        if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        if (audioCtx.state === 'suspended') audioCtx.resume();
+
+        const type = waveTypeSelect.value;
+        const terms = parseInt(numTermsSelect.value);
+        const maxHarmonics = 128;
+        
+        const real = new Float32Array(maxHarmonics);
+        const imag = new Float32Array(maxHarmonics);
+
+        for (let k = 1; k <= terms; k++) {
+            let n, coeff;
+
+            if (type === 'square-even-func') {
+                n = 2 * k - 1;
+                if (n < maxHarmonics) {
+                    coeff = 4 / (Math.PI * n);
+                    let sign = Math.pow(-1, k - 1);
+                    real[n] = sign * coeff;
+                }
+            } 
+            else if (type === 'square-odd-func') {
+                n = 2 * k - 1;
+                if (n < maxHarmonics) {
+                    coeff = 4 / (Math.PI * n);
+                    imag[n] = coeff;
+                }
+            } 
+            else if (type === 'triangle-even-func') {
+                n = 2 * k - 1;
+                if (n < maxHarmonics) {
+                    coeff = 8 / (Math.PI * Math.PI * n * n);
+                    real[n] = coeff;
+                }
+            } 
+            else if (type === 'triangle-odd-func') {
+                n = 2 * k - 1;
+                if (n < maxHarmonics) {
+                    coeff = 8 / (Math.PI * Math.PI * n * n);
+                    let sign = Math.pow(-1, (n - 1) / 2);
+                    imag[n] = sign * coeff;
+                }
+            } 
+            else if (type === 'sawtooth') {
+                n = k;
+                if (n < maxHarmonics) {
+                    coeff = (2 * Math.pow(-1, n + 1)) / (Math.PI * n);
+                    imag[n] = coeff;
+                }
+            }
+        }
+
+        const wave = audioCtx.createPeriodicWave(real, imag);
+        oscillator = audioCtx.createOscillator();
+        oscillator.setPeriodicWave(wave);
+        oscillator.frequency.value = 250;
+        
+        const gainNode = audioCtx.createGain();
+        gainNode.gain.value = 0.15;
+        
+        oscillator.connect(gainNode);
+        if (analyser) {
+            gainNode.connect(analyser);
+        }
+        gainNode.connect(audioCtx.destination);
+        
+        oscillator.start();
+    }
+
+    document.getElementById('playBtn').addEventListener('click', playAudioFourier);
+
+    document.getElementById('stopBtn').addEventListener('click', () => {
+        if (oscillator) {
+            try { oscillator.stop(); } catch(e){}
+            oscillator = null;
+        }
+    });
+
+    const timeCanvas = document.getElementById('timeCanvas');
+    const tCtx = timeCanvas.getContext('2d');
+    const fftCanvas = document.getElementById('fftCanvas');
+    const fftCtx = fftCanvas.getContext('2d');
+    const spectroCanvas = document.getElementById('spectrogramCanvas');
+    const sCtx = spectroCanvas.getContext('2d');
+
+    const spectroBuffer = document.createElement('canvas');
+    spectroBuffer.width = 3000;
+    spectroBuffer.height = spectroCanvas.height;
+    const sbCtx = spectroBuffer.getContext('2d');
+    const spectroContainer = document.getElementById('spectroScreenContainer');
+    const fullscreenSpectroBtn = document.getElementById('fullscreenSpectroBtn');
+
+    let micStream = null;
+    let micAudioCtx = null;
+    let analyser = null;
+    let animMic = null;
+    let micPaused = false;
+    let isDraggingSpectro = false;
+    let dragStartX = 0;
+    let dragStartOffset = 0;
+    let spectroScrollOffset = 0;
+    let activePeaks = [];
+
+    const MAX_FREQ_DISPLAY = 10000;
+    const TARGET_LABELS = [0, 2500, 5000, 7500, 10000];
+
+    fullscreenSpectroBtn.addEventListener('click', () => {
+        if (!document.fullscreenElement) {
+            if (spectroContainer.requestFullscreen) {
+                spectroContainer.requestFullscreen();
+            } else if (spectroContainer.webkitRequestFullscreen) {
+                spectroContainer.webkitRequestFullscreen();
+            }
+        } else {
+            if (document.exitFullscreen) {
+                document.exitFullscreen();
+            }
+        }
+    });
+
+    document.addEventListener('fullscreenchange', () => {
+        if (document.fullscreenElement === spectroContainer) {
+            fullscreenSpectroBtn.textContent = '✕ Salir Pantalla Completa';
+        } else {
+            fullscreenSpectroBtn.textContent = '⛶ Pantalla Completa';
+        }
+    });
+
+    spectroCanvas.addEventListener('mousedown', (e) => {
+        if (!micPaused) return;
+        isDraggingSpectro = true;
+        dragStartX = e.clientX;
+        dragStartOffset = spectroScrollOffset;
+        spectroContainer.classList.add('draggable');
+    });
+
+    spectroCanvas.addEventListener('touchstart', (e) => {
+        if (!micPaused || !e.touches.length) return;
+        isDraggingSpectro = true;
+        dragStartX = e.touches[0].clientX;
+        dragStartOffset = spectroScrollOffset;
+    }, { passive: true });
+
+    window.addEventListener('mousemove', (e) => {
+        if (!isDraggingSpectro) return;
+        const deltaX = e.clientX - dragStartX;
+        const maxScroll = spectroBuffer.width - spectroCanvas.width;
+        spectroScrollOffset = Math.max(0, Math.min(maxScroll, dragStartOffset - deltaX));
+        redrawSpectrogramFromBuffer();
+    });
+
+    window.addEventListener('touchmove', (e) => {
+        if (!isDraggingSpectro || !e.touches.length) return;
+        const deltaX = e.touches[0].clientX - dragStartX;
+        const maxScroll = spectroBuffer.width - spectroCanvas.width;
+        spectroScrollOffset = Math.max(0, Math.min(maxScroll, dragStartOffset - deltaX));
+        redrawSpectrogramFromBuffer();
+    }, { passive: true });
+
+    window.addEventListener('mouseup', () => {
+        if (isDraggingSpectro) {
+            isDraggingSpectro = false;
+            spectroContainer.classList.remove('draggable');
+        }
+    });
+
+    window.addEventListener('touchend', () => {
+        if (isDraggingSpectro) {
+            isDraggingSpectro = false;
+        }
+    });
+
+    function redrawSpectrogramFromBuffer() {
+        const sWidth = spectroCanvas.width;
+        const sHeight = spectroCanvas.height;
+        sCtx.fillStyle = '#000000';
+        sCtx.fillRect(0, 0, sWidth, sHeight);
+        
+        sCtx.drawImage(
+            spectroBuffer, 
+            spectroBuffer.width - sWidth - spectroScrollOffset, 0, sWidth, sHeight,
+            0, 0, sWidth, sHeight
+        );
+    }
+
+    document.getElementById('startMicBtn').addEventListener('click', async () => {
+        try {
+            if (!micAudioCtx) micAudioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            if (micAudioCtx.state === 'suspended') await micAudioCtx.resume();
+
+            analyser = micAudioCtx.createAnalyser();
+            analyser.fftSize = 4096; 
+            analyser.smoothingTimeConstant = 0.8; 
+
+            try {
+                micStream = await navigator.mediaDevices.getUserMedia({ audio: true, video: false });
+                const micSource = micAudioCtx.createMediaStreamSource(micStream);
+                micSource.connect(analyser);
+            } catch (streamErr) {
+                console.warn("Acceso a micrófono restringido o no disponible:", streamErr);
+                if (oscillator) {
+                    playAudioFourier();
+                } else {
+                    alert("ℹ️ El acceso al micrófono está restringido en este entorno. Se utilizará el generador de tonos interno para alimentar el analizador.");
+                    playAudioFourier();
+                }
+            }
+            
+            micPaused = false;
+            spectroScrollOffset = 0;
+            spectroContainer.classList.remove('draggable');
+            if (animMic) cancelAnimationFrame(animMic);
+            processMicData();
+        } catch (err) { 
+            console.warn("Error inicializando audio:", err);
+            micPaused = false;
+            spectroScrollOffset = 0;
+            spectroContainer.classList.remove('draggable');
+            if (animMic) cancelAnimationFrame(animMic);
+            processMicData();
+        }
+    });
+
+    const unlockAudioContext = () => {
+        if (audioCtx && audioCtx.state === 'suspended') {
+            audioCtx.resume();
+        }
+        if (micAudioCtx && micAudioCtx.state === 'suspended') {
+            micAudioCtx.resume();
+        }
+    };
+    document.addEventListener('touchstart', unlockAudioContext, { once: false });
+    document.addEventListener('click', unlockAudioContext, { once: false });
+
+    document.getElementById('stopMicBtn').addEventListener('click', () => {
+        micPaused = !micPaused;
+        const btn = document.getElementById('stopMicBtn');
+        if (micPaused) {
+            btn.textContent = '▶ Reanudar Analizador FFT';
+            spectroContainer.classList.add('draggable');
+            if (animMic) cancelAnimationFrame(animMic);
+        } else {
+            btn.textContent = '■ Pausar / Desconectar Analizador';
+            spectroContainer.classList.remove('draggable');
+            spectroScrollOffset = 0;
+            processMicData();
+        }
+    });
+
+    function processMicData() {
+        if (micPaused || !analyser) return;
+        animMic = requestAnimationFrame(processMicData);
+        
+        const bufferLength = analyser.frequencyBinCount;
+        const timeData = new Uint8Array(bufferLength);
+        const freqData = new Uint8Array(bufferLength);
+        
+        analyser.getByteTimeDomainData(timeData);
+        analyser.getByteFrequencyData(freqData);
+        
+        const sampleRate = (micAudioCtx || audioCtx).sampleRate;
+        const nyquist = sampleRate / 2;
+        const hzPerBin = nyquist / bufferLength;
+
+        const tWidth = timeCanvas.width;
+        const tHeight = timeCanvas.height;
+        drawGrid(tCtx, tWidth, tHeight);
+        
+        tCtx.beginPath();
+        tCtx.strokeStyle = '#00ffff';
+        tCtx.lineWidth = 2;
+        let x = 0;
+        let sliceWidth = tWidth * 1.0 / bufferLength;
+        
+        for (let i = 0; i < bufferLength; i++) {
+            let v = timeData[i] / 128.0;
+            let y = v * (tHeight / 2);
+            if (i === 0) tCtx.moveTo(x, y);
+            else tCtx.lineTo(x, y);
+            x += sliceWidth;
+        }
+        tCtx.stroke();
+
+        const fWidth = fftCanvas.width;
+        const fHeight = fftCanvas.height;
+        drawGrid(fftCtx, fWidth, fHeight, true);
+
+        const maxBin = Math.min(bufferLength, Math.floor(MAX_FREQ_DISPLAY / hzPerBin));
+        
+        fftCtx.beginPath();
+        fftCtx.strokeStyle = '#E6DFE6';
+        fftCtx.lineWidth = 2;
+        
+        for (let i = 0; i <= maxBin; i++) {
+            let freqX = (i / maxBin) * fWidth;
+            let magY = fHeight - ((freqData[i] / 255.0) * (fHeight - 20));
+            if (i === 0) fftCtx.moveTo(freqX, magY);
+            else fftCtx.lineTo(freqX, magY);
+        }
+        fftCtx.stroke();
+
+        fftCtx.lineTo((maxBin / maxBin) * fWidth, fHeight);
+        fftCtx.lineTo(0, fHeight);
+        fftCtx.fillStyle = 'rgba(230, 223, 230, 0.12)';
+        fftCtx.fill();
+
+        activePeaks = [];
+        const threshold = 40;
+        const minDistanceBins = 10;
+        let lastPeakBin = -999;
+
+        for (let i = 2; i < maxBin - 1; i++) {
+            if (freqData[i] > threshold && 
+                freqData[i] > freqData[i - 1] && 
+                freqData[i] > freqData[i + 1] &&
+                (i - lastPeakBin) > minDistanceBins) {
+                
+                let freqVal = i * hzPerBin;
+                let px = (i / maxBin) * fWidth;
+                let py = fHeight - ((freqData[i] / 255.0) * (fHeight - 20));
+                
+                activePeaks.push({ x: px, y: py, freq: freqVal });
+                lastPeakBin = i;
+            }
+        }
+
+        activePeaks.forEach(peak => {
+            fftCtx.beginPath();
+            fftCtx.fillStyle = '#ff0000';
+            fftCtx.arc(peak.x, peak.y, 4, 0, 2 * Math.PI);
+            fftCtx.fill();
+
+            fftCtx.fillStyle = '#00ffff';
+            fftCtx.font = '10px "Courier New", monospace';
+            fftCtx.textAlign = 'center';
+            fftCtx.fillText(Math.round(peak.freq) + 'Hz', peak.x, peak.y - 8);
+        });
+
+        fftCtx.fillStyle = '#ffffff';
+        fftCtx.font = '11px "Courier New", monospace';
+        fftCtx.textAlign = 'center';
+
+        TARGET_LABELS.forEach(targetFreq => {
+            if (targetFreq <= MAX_FREQ_DISPLAY) {
+                let xPos = (targetFreq / MAX_FREQ_DISPLAY) * fWidth;
+                fftCtx.beginPath();
+                fftCtx.strokeStyle = 'rgba(255, 255, 255, 0.25)';
+                fftCtx.moveTo(xPos, 0);
+                fftCtx.lineTo(xPos, fHeight);
+                fftCtx.stroke();
+                fftCtx.fillText(targetFreq + ' Hz', xPos, fHeight - 5);
+            }
+        });
+
+        sbCtx.drawImage(spectroBuffer, -1, 0);
+        const sWidth = spectroCanvas.width;
+        const sHeight = spectroCanvas.height;
+        
+        const colCanvas = document.createElement('canvas');
+        colCanvas.width = 1;
+        colCanvas.height = sHeight;
+        const cCtx = colCanvas.getContext('2d');
+        const imgData = cCtx.createImageData(1, sHeight);
+        
+        for (let y = 0; y < sHeight; y++) {
+            let freqNormalized = 1.0 - (y / sHeight);
+            let targetFreq = freqNormalized * MAX_FREQ_DISPLAY;
+            let binIndex = Math.floor(targetFreq / hzPerBin);
+            let val = 0;
+            
+            if (binIndex >= 0 && binIndex <= maxBin) {
+                val = freqData[binIndex];
+            }
+            
+            let r = 0, g = 0, b = 0;
+            if (val > 0) {
+                let norm = val / 255.0;
+                if (norm < 0.5) {
+                    let t = norm * 2;
+                    r = 0;
+                    g = Math.floor(120 * t);
+                    b = Math.floor(200 * t);
+                } else {
+                    let t = (norm - 0.5) * 2;
+                    r = Math.floor(150 * t);
+                    g = Math.floor(120 + 135 * t);
+                    b = 255;
+                }
+            }
+            
+            let idx = y * 4;
+            imgData.data[idx] = r;
+            imgData.data[idx + 1] = g;
+            imgData.data[idx + 2] = b;
+            imgData.data[idx + 3] = 255;
+        }
+        cCtx.putImageData(imgData, 0, 0);
+        sbCtx.drawImage(colCanvas, spectroBuffer.width - 1, 0);
+
+        redrawSpectrogramFromBuffer();
+    }
+</script>
+</body>
+</html>
